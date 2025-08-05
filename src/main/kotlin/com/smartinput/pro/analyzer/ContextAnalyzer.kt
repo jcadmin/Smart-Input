@@ -224,11 +224,26 @@ class ContextAnalyzer {
      * Suggest input method for string content
      */
     private fun suggestInputMethodForString(content: String): InputMethodType {
-        return when {
+        val result = when {
             containsChinese(content) -> InputMethodType.CHINESE
             containsOnlyEnglish(content) -> InputMethodType.ENGLISH
             else -> InputMethodType.CHINESE // Default to Chinese for mixed content
         }
+
+        // 添加调试日志 - 改为INFO级别便于查看
+        LOG.info("字符串内容分析: '$content' -> $result")
+
+        // 如果启用调试模式，显示通知
+        try {
+            val configService = com.smartinput.pro.service.SmartInputConfigService.getInstance()
+            if (configService.isDebugMode()) {
+                showDebugNotification("字符串分析: '$content' -> $result")
+            }
+        } catch (e: Exception) {
+            // 忽略通知错误
+        }
+
+        return result
     }
 
     /**
@@ -277,6 +292,20 @@ class ContextAnalyzer {
             parent?.toString()?.contains("VARIABLE") == true -> "Variable"
             parent?.toString()?.contains("KEYWORD") == true -> "Keyword"
             else -> "Code element: ${element.javaClass.simpleName}"
+        }
+    }
+
+    /**
+     * 显示调试通知
+     */
+    private fun showDebugNotification(message: String) {
+        try {
+            com.intellij.notification.NotificationGroupManager.getInstance()
+                .getNotificationGroup("SmartInputPro")
+                .createNotification("SmartInput Debug", message, com.intellij.notification.NotificationType.INFORMATION)
+                .notify(null)
+        } catch (e: Exception) {
+            // 忽略通知错误
         }
     }
 }

@@ -242,6 +242,7 @@ class SmartInputConfigurable : Configurable {
     private fun testSwitchToEnglish() {
         try {
             // 使用Java Robot类直接发送键盘事件
+            // Robot会自动将事件发送到当前有焦点的窗口
             val robot = java.awt.Robot()
 
             // 发送Ctrl+Space
@@ -255,7 +256,7 @@ class SmartInputConfigurable : Configurable {
 
             JOptionPane.showMessageDialog(
                 null,
-                "Java Robot Test Completed!\n\nCtrl+Space has been sent using Java Robot.\nPlease test input in Notepad immediately!",
+                "Java Robot Test Completed!\n\nCtrl+Space has been sent using Java Robot.\nPlease test input in the current window immediately!",
                 "Test Switch to English - Java Robot",
                 JOptionPane.INFORMATION_MESSAGE
             )
@@ -273,6 +274,7 @@ class SmartInputConfigurable : Configurable {
     private fun testSwitchToChinese() {
         try {
             // 使用Java Robot类直接发送键盘事件
+            // Robot会自动将事件发送到当前有焦点的窗口
             val robot = java.awt.Robot()
 
             // 发送Ctrl+Space
@@ -286,7 +288,7 @@ class SmartInputConfigurable : Configurable {
 
             JOptionPane.showMessageDialog(
                 null,
-                "Java Robot Test Completed!\n\nCtrl+Space has been sent using Java Robot.\nPlease test input in Notepad immediately!",
+                "Java Robot Test Completed!\n\nCtrl+Space has been sent using Java Robot.\nPlease test input in the current window immediately!",
                 "Test Switch to Chinese - Java Robot",
                 JOptionPane.INFORMATION_MESSAGE
             )
@@ -303,41 +305,363 @@ class SmartInputConfigurable : Configurable {
 
     private fun detectCurrentInputMethod() {
         try {
-            // 检测当前输入法状态
-            val script = """
-                Add-Type -TypeDefinition @'
-                using System;
-                using System.Runtime.InteropServices;
-                public class InputMethod {
-                    [DllImport("user32.dll")]
-                    public static extern IntPtr GetKeyboardLayout(uint idThread);
+            val results = mutableListOf<String>()
+            results.add("=== 输入法状态检测调试 ===\n")
+
+            // 方法1：QQ输入法窗口检测
+            try {
+                results.add("【方法1：QQ输入法窗口检测】")
+                val windowResult = testQQInputMethodWindow()
+                results.add("窗口检测结果:\n$windowResult")
+                results.add("")
+            } catch (e: Exception) {
+                results.add("QQ窗口检测失败: ${e.message}")
+                results.add("")
+            }
+
+            // 方法2：检测系统语言环境
+            try {
+                results.add("【方法2：系统语言环境】")
+                val systemLocale = java.util.Locale.getDefault()
+                results.add("系统默认语言: ${systemLocale.displayLanguage} (${systemLocale.language})")
+
+                val inputContext = java.awt.im.InputContext.getInstance()
+                val currentLocale = inputContext?.locale
+                if (currentLocale != null) {
+                    results.add("输入法上下文语言: ${currentLocale.displayLanguage} (${currentLocale.language})")
+                } else {
+                    results.add("输入法上下文语言: 未检测到")
                 }
-'@
-                ${'$'}layout = [InputMethod]::GetKeyboardLayout(0).ToString('X8')
-                Write-Output "当前键盘布局: ${'$'}layout"
+                results.add("")
+            } catch (e: Exception) {
+                results.add("系统语言环境检测失败: ${e.message}")
+                results.add("")
+            }
 
-                ${'$'}lang = Get-WinUserLanguageList | Select-Object -First 1
-                Write-Output "当前语言: $(${'$'}lang.LanguageTag)"
-                Write-Output "输入法: $(${'$'}lang.InputMethodTips)"
-            """.trimIndent()
+            // 方法3：检测输入法进程
+            try {
+                results.add("【方法3：输入法进程检测】")
+                val processResult = testInputMethodProcess()
+                results.add("进程检测结果: $processResult")
+                results.add("")
+            } catch (e: Exception) {
+                results.add("进程检测失败: ${e.message}")
+                results.add("")
+            }
 
-            val process = ProcessBuilder("powershell", "-Command", script).start()
-            val output = process.inputStream.bufferedReader().readText()
-            process.waitFor()
+            // 方法4：使用插件的完整检测逻辑
+            try {
+                results.add("【方法4：插件完整检测】")
+                // 注意：WindowsInputMethodManager构造函数不需要参数
+                val inputMethodManager = com.smartinput.pro.platform.WindowsInputMethodManager()
+
+                // 注意：这需要在协程中调用，这里我们模拟调用
+                results.add("插件检测: 需要在实际环境中测试")
+                results.add("当前使用: Windows平台 + Java Robot切换")
+                results.add("")
+            } catch (e: Exception) {
+                results.add("插件检测失败: ${e.message}")
+                results.add("")
+            }
+
+            results.add("=== 检测完成 ===")
+            results.add("请根据上述结果判断哪种方法最准确")
 
             JOptionPane.showMessageDialog(
                 null,
-                "当前输入法状态：\n\n$output",
-                "检测当前输入法",
+                results.joinToString("\n"),
+                "输入法状态检测调试",
                 JOptionPane.INFORMATION_MESSAGE
             )
         } catch (e: Exception) {
             JOptionPane.showMessageDialog(
                 null,
                 "检测失败：${e.message}",
-                "检测当前输入法",
+                "输入法状态检测调试 - 错误",
                 JOptionPane.ERROR_MESSAGE
             )
         }
     }
+
+    /**
+     * 测试QQ输入法窗口检测
+     */
+    private fun testQQInputMethodWindow(): String {
+        return try {
+            val script = """
+                Add-Type -TypeDefinition @'
+                using System;
+                using System.Runtime.InteropServices;
+                using System.Text;
+                public class WindowDetector {
+                    [DllImport("user32.dll", SetLastError = true)]
+                    public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+
+                    [DllImport("user32.dll", SetLastError = true)]
+                    public static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string lpszClass, string lpszWindow);
+
+                    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+                    public static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
+
+                    [DllImport("user32.dll")]
+                    public static extern bool IsWindowVisible(IntPtr hWnd);
+
+                    [DllImport("user32.dll")]
+                    public static extern bool EnumWindows(EnumWindowsProc enumProc, IntPtr lParam);
+
+                    [DllImport("user32.dll")]
+                    public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+
+                    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+                    public static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
+
+                    public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+                }
+'@ -ErrorAction SilentlyContinue
+
+                # 查找QQ输入法相关窗口
+                ${'$'}qqWindows = @()
+
+                # 常见的QQ输入法窗口类名和标题
+                ${'$'}qqClassNames = @(
+                    "QQPinyinFloatWnd",
+                    "QQPinyinMainWnd",
+                    "QQInputMethodStatusWnd",
+                    "QQPinyinCandWnd",
+                    "QQInputStatusWnd",
+                    "TXGuiFoundation",
+                    "QQPinyin"
+                )
+
+                ${'$'}qqTitles = @(
+                    "*QQ*",
+                    "*拼音*",
+                    "*输入法*"
+                )
+
+                # 搜索QQ输入法窗口
+                foreach (${'$'}className in ${'$'}qqClassNames) {
+                    try {
+                        ${'$'}hwnd = [WindowDetector]::FindWindow(${'$'}className, ${'$'}null)
+                        if (${'$'}hwnd -ne [IntPtr]::Zero) {
+                            ${'$'}sb = New-Object System.Text.StringBuilder(256)
+                            [WindowDetector]::GetWindowText(${'$'}hwnd, ${'$'}sb, 256)
+                            ${'$'}title = ${'$'}sb.ToString()
+                            ${'$'}visible = [WindowDetector]::IsWindowVisible(${'$'}hwnd)
+
+                            Write-Output "找到QQ窗口: 类名=${'$'}className, 标题=${'$'}title, 可见=${'$'}visible"
+                        }
+                    } catch {
+                        # 忽略错误继续搜索
+                    }
+                }
+
+                # 枚举所有窗口寻找QQ输入法
+                ${'$'}foundWindows = @()
+                ${'$'}enumProc = {
+                    param(${'$'}hwnd, ${'$'}lParam)
+
+                    try {
+                        ${'$'}sb = New-Object System.Text.StringBuilder(256)
+                        [WindowDetector]::GetClassName(${'$'}hwnd, ${'$'}sb, 256)
+                        ${'$'}className = ${'$'}sb.ToString()
+
+                        ${'$'}sb2 = New-Object System.Text.StringBuilder(256)
+                        [WindowDetector]::GetWindowText(${'$'}hwnd, ${'$'}sb2, 256)
+                        ${'$'}title = ${'$'}sb2.ToString()
+
+                        if (${'$'}className -like "*QQ*" -or ${'$'}className -like "*pinyin*" -or ${'$'}title -like "*QQ*" -or ${'$'}title -like "*拼音*") {
+                            ${'$'}visible = [WindowDetector]::IsWindowVisible(${'$'}hwnd)
+                            ${'$'}script:foundWindows += "类名: ${'$'}className, 标题: ${'$'}title, 可见: ${'$'}visible"
+                        }
+                    } catch {
+                        # 忽略错误
+                    }
+
+                    return ${'$'}true
+                }
+
+                [WindowDetector]::EnumWindows(${'$'}enumProc, [IntPtr]::Zero)
+
+                if (${'$'}foundWindows.Count -gt 0) {
+                    Write-Output "枚举找到的QQ相关窗口:"
+                    foreach (${'$'}window in ${'$'}foundWindows) {
+                        Write-Output "  ${'$'}window"
+                    }
+                } else {
+                    Write-Output "未找到QQ输入法相关窗口"
+                }
+            """.trimIndent()
+
+            val process = ProcessBuilder("powershell", "-Command", script).start()
+            val output = process.inputStream.bufferedReader().readText()
+            process.waitFor()
+
+            output.trim()
+        } catch (e: Exception) {
+            "QQ窗口检测异常: ${e.message}"
+        }
+    }
+
+    /**
+     * 测试多种输入法检测方法
+     */
+    private fun testIMEConversionStatus(): String {
+        val results = mutableListOf<String>()
+
+        // 方法1：检测当前键盘布局
+        try {
+            results.add("=== 键盘布局检测 ===")
+            val layoutScript = """
+                Add-Type -TypeDefinition @'
+                using System;
+                using System.Runtime.InteropServices;
+                using System.Text;
+                public class KeyboardDetector {
+                    [DllImport("user32.dll")]
+                    public static extern IntPtr GetKeyboardLayout(uint idThread);
+
+                    [DllImport("user32.dll")]
+                    public static extern int GetKeyboardLayoutName(StringBuilder pwszKLID);
+
+                    [DllImport("user32.dll")]
+                    public static extern IntPtr GetForegroundWindow();
+
+                    [DllImport("user32.dll")]
+                    public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+                }
+'@ -ErrorAction SilentlyContinue
+
+                ${'$'}hwnd = [KeyboardDetector]::GetForegroundWindow()
+                ${'$'}processId = 0
+                ${'$'}threadId = [KeyboardDetector]::GetWindowThreadProcessId(${'$'}hwnd, [ref]${'$'}processId)
+
+                ${'$'}layout = [KeyboardDetector]::GetKeyboardLayout(${'$'}threadId)
+                Write-Output "当前线程键盘布局: $(${'$'}layout.ToInt64())"
+
+                ${'$'}sb = New-Object System.Text.StringBuilder(9)
+                ${'$'}result = [KeyboardDetector]::GetKeyboardLayoutName(${'$'}sb)
+                if (${'$'}result -ne 0) {
+                    Write-Output "键盘布局名称: $(${'$'}sb.ToString())"
+                }
+            """.trimIndent()
+
+            val process1 = ProcessBuilder("powershell", "-Command", layoutScript).start()
+            val output1 = process1.inputStream.bufferedReader().readText()
+            process1.waitFor()
+            results.add(output1.trim())
+        } catch (e: Exception) {
+            results.add("键盘布局检测失败: ${e.message}")
+        }
+
+        // 方法2：检测Text Services Framework
+        try {
+            results.add("\n=== TSF输入法检测 ===")
+            val tsfScript = """
+                try {
+                    # 尝试获取当前输入法信息
+                    ${'$'}inputLanguage = [System.Windows.Forms.InputLanguage]::CurrentInputLanguage
+                    Write-Output "当前输入语言: $(${'$'}inputLanguage.Culture.Name)"
+                    Write-Output "输入语言显示名: $(${'$'}inputLanguage.Culture.DisplayName)"
+                    Write-Output "布局名称: $(${'$'}inputLanguage.LayoutName)"
+
+                    # 获取所有已安装的输入语言
+                    ${'$'}installedLanguages = [System.Windows.Forms.InputLanguage]::InstalledInputLanguages
+                    Write-Output "已安装输入语言数量: $(${'$'}installedLanguages.Count)"
+
+                } catch {
+                    Write-Output "TSF检测失败: $(${'$'}_.Exception.Message)"
+                }
+            """.trimIndent()
+
+            val process2 = ProcessBuilder("powershell", "-Command", "Add-Type -AssemblyName System.Windows.Forms; $tsfScript").start()
+            val output2 = process2.inputStream.bufferedReader().readText()
+            process2.waitFor()
+            results.add(output2.trim())
+        } catch (e: Exception) {
+            results.add("TSF检测失败: ${e.message}")
+        }
+
+        // 方法3：检测注册表中的输入法信息
+        try {
+            results.add("\n=== 注册表输入法检测 ===")
+            val regScript = """
+                try {
+                    # 检查当前用户的输入法设置
+                    ${'$'}currentIM = Get-ItemProperty -Path "HKCU:\Control Panel\International" -ErrorAction SilentlyContinue
+                    if (${'$'}currentIM) {
+                        Write-Output "当前区域设置: $(${'$'}currentIM.Locale)"
+                        Write-Output "默认输入法: $(${'$'}currentIM.sLanguage)"
+                    }
+
+                    # 检查输入法列表
+                    ${'$'}imePath = "HKLM:\SYSTEM\CurrentControlSet\Control\Keyboard Layouts"
+                    ${'$'}layouts = Get-ChildItem -Path ${'$'}imePath -ErrorAction SilentlyContinue
+                    Write-Output "系统键盘布局数量: $(${'$'}layouts.Count)"
+
+                } catch {
+                    Write-Output "注册表检测失败: $(${'$'}_.Exception.Message)"
+                }
+            """.trimIndent()
+
+            val process3 = ProcessBuilder("powershell", "-Command", regScript).start()
+            val output3 = process3.inputStream.bufferedReader().readText()
+            process3.waitFor()
+            results.add(output3.trim())
+        } catch (e: Exception) {
+            results.add("注册表检测失败: ${e.message}")
+        }
+
+        return results.joinToString("\n")
+    }
+
+    /**
+     * 测试输入法进程检测
+     */
+    private fun testInputMethodProcess(): String {
+        return try {
+            val script = """
+                # 检查QQ输入法相关进程
+                ${'$'}qqProcesses = Get-Process | Where-Object {
+                    ${'$'}_.ProcessName -like "*QQ*" -or
+                    ${'$'}_.ProcessName -like "*qq*" -or
+                    ${'$'}_.ProcessName -like "*QQPinyin*" -or
+                    ${'$'}_.ProcessName -like "*QQInput*"
+                }
+
+                if (${'$'}qqProcesses) {
+                    Write-Output "找到QQ输入法相关进程:"
+                    foreach (${'$'}proc in ${'$'}qqProcesses) {
+                        Write-Output "  - $(${'$'}proc.ProcessName): $(${'$'}proc.MainWindowTitle)"
+                    }
+                } else {
+                    Write-Output "未找到QQ输入法相关进程"
+                }
+
+                # 检查所有输入法相关进程
+                ${'$'}imeProcesses = Get-Process | Where-Object {
+                    ${'$'}_.ProcessName -like "*ime*" -or
+                    ${'$'}_.ProcessName -like "*input*" -or
+                    ${'$'}_.ProcessName -like "*pinyin*"
+                }
+
+                if (${'$'}imeProcesses) {
+                    Write-Output "找到输入法相关进程:"
+                    foreach (${'$'}proc in ${'$'}imeProcesses) {
+                        Write-Output "  - $(${'$'}proc.ProcessName)"
+                    }
+                }
+            """.trimIndent()
+
+            val process = ProcessBuilder("powershell", "-Command", script).start()
+            val output = process.inputStream.bufferedReader().readText()
+            process.waitFor()
+
+            output.trim()
+        } catch (e: Exception) {
+            "进程检测异常: ${e.message}"
+        }
+    }
+
+
 }

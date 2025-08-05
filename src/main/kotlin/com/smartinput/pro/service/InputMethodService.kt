@@ -94,7 +94,7 @@ class InputMethodService(private val project: Project) {
 
         serviceScope.launch {
             try {
-                val success = performSwitch(targetMethod)
+                val success = performSwitch(targetMethod, context)
                 if (success) {
                     val oldMethod = currentInputMethod
                     currentInputMethod = targetMethod
@@ -213,9 +213,14 @@ class InputMethodService(private val project: Project) {
     /**
      * Perform the actual input method switch
      */
-    private suspend fun performSwitch(targetMethod: InputMethodType): Boolean {
+    private suspend fun performSwitch(targetMethod: InputMethodType, context: String = "unknown"): Boolean {
         return try {
-            inputMethodManager.switchToInputMethod(targetMethod)
+            // 如果是Windows平台，传递上下文信息
+            if (inputMethodManager is com.smartinput.pro.platform.WindowsInputMethodManager) {
+                inputMethodManager.switchToInputMethod(targetMethod, context)
+            } else {
+                inputMethodManager.switchToInputMethod(targetMethod)
+            }
         } catch (e: Exception) {
             LOG.error("Failed to perform input method switch", e)
             false

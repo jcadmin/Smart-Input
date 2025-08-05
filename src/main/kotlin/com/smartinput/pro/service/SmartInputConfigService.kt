@@ -32,9 +32,9 @@ class SmartInputConfigService : PersistentStateComponent<SmartInputConfigService
 
         // 上下文规则
         var switchInCodeAreas: Boolean = true,
-        var switchInComments: Boolean = false,
-        var switchInStrings: Boolean = false,
-        var switchInDocumentation: Boolean = false,
+        var switchInComments: Boolean = true,
+        var switchInStrings: Boolean = true,
+        var switchInDocumentation: Boolean = true,
 
         // 输入法偏好设置
         var codeAreaInputMethod: String = "english",
