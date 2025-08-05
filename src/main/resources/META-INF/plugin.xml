@@ -1,0 +1,101 @@
+<idea-plugin>
+    <id>com.smartinput.pro</id>
+    <name>Smart Input Pro</name>
+    <vendor email="support@smartinput.pro" url="https://github.com/smartinput/pro">Smart Input Pro Team</vendor>
+
+    <description><![CDATA[
+        <h3>Smart Input Pro - Intelligent Input Method Switching</h3>
+        <p>Smart Input Pro automatically switches between Chinese and English input methods based on cursor context, 
+        making it perfect for Chinese developers who frequently switch between languages while coding.</p>
+        
+        <h4>Key Features:</h4>
+        <ul>
+            <li><strong>Context-Aware Switching</strong>: Automatically detects code, comments, and string contexts</li>
+            <li><strong>Visual Indicator</strong>: Shows current input method status near the cursor</li>
+            <li><strong>Customizable Rules</strong>: Configure switching behavior for different contexts</li>
+            <li><strong>Cross-Platform</strong>: Supports Windows, macOS, and Linux</li>
+            <li><strong>Performance Optimized</strong>: Minimal impact on IDE performance</li>
+        </ul>
+        
+        <h4>How it works:</h4>
+        <ul>
+            <li>Code areas: Automatically switches to English input</li>
+            <li>Comments: Allows Chinese input for documentation</li>
+            <li>String literals: Smart detection based on content</li>
+            <li>Variable names: Enforces English input</li>
+        </ul>
+        
+        <p>Say goodbye to typing errors caused by wrong input method!</p>
+    ]]></description>
+
+    <change-notes><![CDATA[
+        <h4>Version 1.0.0</h4>
+        <ul>
+            <li>Initial release</li>
+            <li>Basic context detection and input method switching</li>
+            <li>Visual input method indicator</li>
+            <li>Configuration panel</li>
+            <li>Support for major programming languages</li>
+        </ul>
+    ]]></change-notes>
+
+    <!-- Plugin compatibility -->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+    <depends optional="true" config-file="java-support.xml">com.intellij.modules.java</depends>
+
+    <!-- Resource bundle for internationalization -->
+    <resource-bundle>messages.SmartInputBundle</resource-bundle>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Application service for plugin configuration -->
+        <applicationService serviceImplementation="com.smartinput.pro.service.SmartInputConfigService"/>
+        
+        <!-- Project service for input method management -->
+        <projectService serviceImplementation="com.smartinput.pro.service.InputMethodService"/>
+        
+        <!-- Startup activity -->
+        <postStartupActivity implementation="com.smartinput.pro.startup.SmartInputStartupActivity"/>
+        
+        <!-- Configuration panel -->
+        <applicationConfigurable 
+            parentId="tools" 
+            instance="com.smartinput.pro.config.SmartInputConfigurable"
+            id="com.smartinput.pro.config"
+            displayName="Smart Input Pro"/>
+            
+        <!-- Editor action handler -->
+        <editorActionHandler 
+            action="EditorEscape" 
+            implementationClass="com.smartinput.pro.action.SmartInputActionHandler"/>
+    </extensions>
+
+    <applicationListeners>
+        <!-- Editor events listener -->
+        <listener 
+            class="com.smartinput.pro.listener.EditorEventListener"
+            topic="com.intellij.openapi.editor.event.EditorEventMulticaster"/>
+    </applicationListeners>
+
+    <actions>
+        <!-- Toggle plugin action -->
+        <action 
+            id="SmartInputPro.Toggle" 
+            class="com.smartinput.pro.action.ToggleSmartInputAction"
+            text="Toggle Smart Input Pro"
+            description="Enable or disable Smart Input Pro">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt I"/>
+        </action>
+        
+        <!-- Manual switch action -->
+        <action 
+            id="SmartInputPro.ManualSwitch" 
+            class="com.smartinput.pro.action.ManualSwitchAction"
+            text="Manual Input Method Switch"
+            description="Manually switch input method">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift I"/>
+        </action>
+    </actions>
+</idea-plugin>

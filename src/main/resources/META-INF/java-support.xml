@@ -1,0 +1,8 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Java-specific context analyzer -->
+        <lang.documentationProvider 
+            language="JAVA"
+            implementationClass="com.smartinput.pro.java.JavaContextAnalyzer"/>
+    </extensions>
+</idea-plugin>
