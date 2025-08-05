@@ -229,15 +229,20 @@ class InputMethodIndicator(private val editor: Editor) {
      */
     private fun addToEditor() {
         val panel = indicatorPanel ?: return
-        
+
         // Remove if already added
         removeFromEditor()
-        
-        // Add to editor's layered pane
-        val layeredPane = editor.component.rootPane?.layeredPane
-        if (layeredPane != null) {
-            layeredPane.add(panel, JLayeredPane.POPUP_LAYER)
-            layeredPane.revalidate()
+
+        try {
+            // Add to editor's layered pane
+            val layeredPane = editor.component.rootPane?.layeredPane
+            if (layeredPane != null) {
+                layeredPane.add(panel, JLayeredPane.POPUP_LAYER as Any)
+                layeredPane.revalidate()
+                layeredPane.repaint()
+            }
+        } catch (e: Exception) {
+            LOG.error("Error adding indicator to editor", e)
         }
     }
 
@@ -288,27 +293,26 @@ class InputMethodIndicator(private val editor: Editor) {
         return when (configService.getIndicatorPosition()) {
             "cursor" -> {
                 // Position near cursor with offset
+                val maxX = maxOf(0, editorBounds.width - indicatorSize.width)
                 Point(
-                    (cursorPoint.x + 20).coerceIn(0, editorBounds.width - indicatorSize.width),
+                    (cursorPoint.x + 20).coerceIn(0, maxX),
                     (cursorPoint.y - 25).coerceAtLeast(0)
                 )
             }
             "top-right" -> {
-                Point(
-                    editorBounds.width - indicatorSize.width - 10,
-                    10
-                )
+                val x = maxOf(0, editorBounds.width - indicatorSize.width - 10)
+                Point(x, 10)
             }
             "bottom-right" -> {
-                Point(
-                    editorBounds.width - indicatorSize.width - 10,
-                    editorBounds.height - indicatorSize.height - 10
-                )
+                val x = maxOf(0, editorBounds.width - indicatorSize.width - 10)
+                val y = maxOf(0, editorBounds.height - indicatorSize.height - 10)
+                Point(x, y)
             }
             else -> {
                 // Default to cursor position
+                val maxX = maxOf(0, editorBounds.width - indicatorSize.width)
                 Point(
-                    (cursorPoint.x + 20).coerceIn(0, editorBounds.width - indicatorSize.width),
+                    (cursorPoint.x + 20).coerceIn(0, maxX),
                     (cursorPoint.y - 25).coerceAtLeast(0)
                 )
             }

@@ -4,38 +4,38 @@
     <vendor email="support@smartinput.pro" url="https://github.com/smartinput/pro">Smart Input Pro Team</vendor>
 
     <description><![CDATA[
-        <h3>Smart Input Pro - Intelligent Input Method Switching</h3>
-        <p>Smart Input Pro automatically switches between Chinese and English input methods based on cursor context, 
-        making it perfect for Chinese developers who frequently switch between languages while coding.</p>
-        
-        <h4>Key Features:</h4>
+        <h3>智能输入法专业版 - 智能输入法切换</h3>
+        <p>智能输入法专业版根据光标上下文自动在中英文输入法之间切换，
+        非常适合经常需要在编程时切换语言的中文开发者。</p>
+
+        <h4>主要功能：</h4>
         <ul>
-            <li><strong>Context-Aware Switching</strong>: Automatically detects code, comments, and string contexts</li>
-            <li><strong>Visual Indicator</strong>: Shows current input method status near the cursor</li>
-            <li><strong>Customizable Rules</strong>: Configure switching behavior for different contexts</li>
-            <li><strong>Cross-Platform</strong>: Supports Windows, macOS, and Linux</li>
-            <li><strong>Performance Optimized</strong>: Minimal impact on IDE performance</li>
+            <li><strong>上下文感知切换</strong>：自动检测代码、注释和字符串上下文</li>
+            <li><strong>可视化指示器</strong>：在光标附近显示当前输入法状态</li>
+            <li><strong>可自定义规则</strong>：为不同上下文配置切换行为</li>
+            <li><strong>跨平台支持</strong>：支持Windows、macOS和Linux</li>
+            <li><strong>性能优化</strong>：对IDE性能影响最小</li>
         </ul>
-        
-        <h4>How it works:</h4>
+
+        <h4>工作原理：</h4>
         <ul>
-            <li>Code areas: Automatically switches to English input</li>
-            <li>Comments: Allows Chinese input for documentation</li>
-            <li>String literals: Smart detection based on content</li>
-            <li>Variable names: Enforces English input</li>
+            <li>代码区域：自动切换到英文输入法</li>
+            <li>注释：允许中文输入用于文档编写</li>
+            <li>字符串字面量：基于内容智能检测</li>
+            <li>变量名：强制使用英文输入法</li>
         </ul>
-        
-        <p>Say goodbye to typing errors caused by wrong input method!</p>
+
+        <p>告别因输入法错误导致的输入错误！</p>
     ]]></description>
 
     <change-notes><![CDATA[
-        <h4>Version 1.0.0</h4>
+        <h4>版本 1.0.0</h4>
         <ul>
-            <li>Initial release</li>
-            <li>Basic context detection and input method switching</li>
-            <li>Visual input method indicator</li>
-            <li>Configuration panel</li>
-            <li>Support for major programming languages</li>
+            <li>首次发布</li>
+            <li>基本的上下文检测和输入法切换</li>
+            <li>可视化输入法指示器</li>
+            <li>配置面板</li>
+            <li>支持主要编程语言</li>
         </ul>
     ]]></change-notes>
 
@@ -70,30 +70,30 @@
             implementationClass="com.smartinput.pro.action.SmartInputActionHandler"/>
     </extensions>
 
-    <applicationListeners>
-        <!-- Editor events listener -->
-        <listener 
-            class="com.smartinput.pro.listener.EditorEventListener"
-            topic="com.intellij.openapi.editor.event.EditorEventMulticaster"/>
-    </applicationListeners>
+    <projectListeners>
+        <!-- Editor manager listener -->
+        <listener
+            class="com.smartinput.pro.listener.EditorManagerListener"
+            topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+    </projectListeners>
 
     <actions>
-        <!-- Toggle plugin action -->
-        <action 
-            id="SmartInputPro.Toggle" 
+        <!-- 切换插件动作 -->
+        <action
+            id="SmartInputPro.Toggle"
             class="com.smartinput.pro.action.ToggleSmartInputAction"
-            text="Toggle Smart Input Pro"
-            description="Enable or disable Smart Input Pro">
+            text="切换智能输入法专业版"
+            description="启用或禁用智能输入法专业版">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
             <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt I"/>
         </action>
-        
-        <!-- Manual switch action -->
-        <action 
-            id="SmartInputPro.ManualSwitch" 
+
+        <!-- 手动切换动作 -->
+        <action
+            id="SmartInputPro.ManualSwitch"
             class="com.smartinput.pro.action.ManualSwitchAction"
-            text="Manual Input Method Switch"
-            description="Manually switch input method">
+            text="手动切换输入法"
+            description="手动切换输入法">
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
             <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift I"/>
         </action>

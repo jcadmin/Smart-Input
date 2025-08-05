@@ -107,25 +107,25 @@ class PlatformDetector {
      */
     fun getRecommendedConfig(): Map<String, Any> {
         return when (getCurrentPlatform()) {
-            Platform.WINDOWS -> mapOf(
+            Platform.WINDOWS -> mapOf<String, Any>(
                 "detectionDelay" to 150,
                 "switchDelay" to 100,
                 "useRegistry" to true,
                 "fallbackMethod" to "sendkeys"
             )
-            Platform.MACOS -> mapOf(
+            Platform.MACOS -> mapOf<String, Any>(
                 "detectionDelay" to 100,
                 "switchDelay" to 50,
                 "useAppleScript" to true,
                 "fallbackMethod" to "keyboard_shortcut"
             )
-            Platform.LINUX -> mapOf(
+            Platform.LINUX -> mapOf<String, Any>(
                 "detectionDelay" to 200,
                 "switchDelay" to 150,
-                "preferredTool" to getInputMethodTool(),
+                "preferredTool" to (getInputMethodTool() ?: "unknown"),
                 "fallbackMethod" to "dbus"
             )
-            Platform.UNKNOWN -> mapOf(
+            Platform.UNKNOWN -> mapOf<String, Any>(
                 "detectionDelay" to 500,
                 "switchDelay" to 300,
                 "enabled" to false

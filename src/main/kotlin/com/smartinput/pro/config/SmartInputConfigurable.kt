@@ -3,7 +3,7 @@ package com.smartinput.pro.config
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.*
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.smartinput.pro.service.SmartInputConfigService
 import com.smartinput.pro.platform.PlatformDetector
@@ -56,96 +56,102 @@ class SmartInputConfigurable : Configurable {
     }
 
     private fun initializeComponents() {
-        // General Settings
-        enabledCheckBox = JBCheckBox("Enable Smart Input Pro")
-        autoSwitchCheckBox = JBCheckBox("Auto Switch Mode")
-        showIndicatorCheckBox = JBCheckBox("Show Input Method Indicator")
-        
-        // Context Rules
-        switchInCodeAreasCheckBox = JBCheckBox("Switch in Code Areas")
-        switchInCommentsCheckBox = JBCheckBox("Switch in Comments")
-        switchInStringsCheckBox = JBCheckBox("Switch in String Literals")
-        switchInDocumentationCheckBox = JBCheckBox("Switch in Documentation")
-        
-        // Input Method Preferences
+        // 基本设置
+        enabledCheckBox = JBCheckBox("启用智能输入法专业版")
+        autoSwitchCheckBox = JBCheckBox("自动切换模式")
+        showIndicatorCheckBox = JBCheckBox("显示输入法指示器")
+
+        // 上下文规则
+        switchInCodeAreasCheckBox = JBCheckBox("在代码区域切换")
+        switchInCommentsCheckBox = JBCheckBox("在注释中切换")
+        switchInStringsCheckBox = JBCheckBox("在字符串字面量中切换")
+        switchInDocumentationCheckBox = JBCheckBox("在文档中切换")
+
+        // 输入法偏好设置
         val inputMethodOptions = arrayOf("english", "chinese", "auto")
         codeAreaInputMethodCombo = ComboBox(inputMethodOptions)
         commentInputMethodCombo = ComboBox(inputMethodOptions)
         stringInputMethodCombo = ComboBox(arrayOf("english", "chinese", "auto"))
         documentationInputMethodCombo = ComboBox(inputMethodOptions)
-        
-        // Appearance Settings
+
+        // 外观设置
         val positionOptions = arrayOf("cursor", "top-right", "bottom-right")
         indicatorPositionCombo = ComboBox(positionOptions)
         indicatorSizeSpinner = JSpinner(SpinnerNumberModel(12, 8, 24, 1))
         indicatorOpacitySlider = JSlider(10, 100, 80)
         indicatorTimeoutSpinner = JSpinner(SpinnerNumberModel(2000, 500, 10000, 100))
-        
-        // Advanced Settings
+
+        // 高级设置
         detectionDelaySpinner = JSpinner(SpinnerNumberModel(100, 0, 5000, 10))
         switchDelaySpinner = JSpinner(SpinnerNumberModel(50, 0, 1000, 10))
-        debugModeCheckBox = JBCheckBox("Debug Mode")
-        
-        // Platform Info
+        debugModeCheckBox = JBCheckBox("调试模式")
+
+        // 平台信息
         val platformInfo = platformDetector.getPlatformInfo()
-        platformInfoLabel = JBLabel("<html><b>Platform:</b> ${platformInfo.platform.displayName}<br>" +
-                "<b>OS:</b> ${platformInfo.osName} ${platformInfo.osVersion}<br>" +
-                "<b>Supported:</b> ${if (platformInfo.isSupported) "Yes" else "No"}</html>")
+        platformInfoLabel = JBLabel("<html><b>平台:</b> ${platformInfo.platform.displayName}<br>" +
+                "<b>操作系统:</b> ${platformInfo.osName} ${platformInfo.osVersion}<br>" +
+                "<b>支持:</b> ${if (platformInfo.isSupported) "是" else "否"}</html>")
     }
 
     private fun createMainPanel(): JPanel {
         return panel {
-            titledRow("General Settings") {
-                row { enabledCheckBox() }
-                row { autoSwitchCheckBox() }
-                row { showIndicatorCheckBox() }
+            group("基本设置") {
+                row { cell(enabledCheckBox) }
+                row { cell(autoSwitchCheckBox) }
+                row { cell(showIndicatorCheckBox) }
             }
-            
-            titledRow("Context Rules") {
-                row("Code Areas:") { 
-                    switchInCodeAreasCheckBox()
-                    codeAreaInputMethodCombo()
+
+            group("上下文规则") {
+                row("代码区域:") {
+                    cell(switchInCodeAreasCheckBox)
+                    cell(codeAreaInputMethodCombo)
                 }
-                row("Comments:") { 
-                    switchInCommentsCheckBox()
-                    commentInputMethodCombo()
+                row("注释:") {
+                    cell(switchInCommentsCheckBox)
+                    cell(commentInputMethodCombo)
                 }
-                row("String Literals:") { 
-                    switchInStringsCheckBox()
-                    stringInputMethodCombo()
+                row("字符串字面量:") {
+                    cell(switchInStringsCheckBox)
+                    cell(stringInputMethodCombo)
                 }
-                row("Documentation:") { 
-                    switchInDocumentationCheckBox()
-                    documentationInputMethodCombo()
+                row("文档:") {
+                    cell(switchInDocumentationCheckBox)
+                    cell(documentationInputMethodCombo)
                 }
             }
-            
-            titledRow("Appearance") {
-                row("Indicator Position:") { indicatorPositionCombo() }
-                row("Indicator Size:") { indicatorSizeSpinner() }
-                row("Indicator Opacity:") { 
-                    indicatorOpacitySlider()
-                    JBLabel("${indicatorOpacitySlider.value}%")
+
+            group("外观") {
+                row("指示器位置:") { cell(indicatorPositionCombo) }
+                row("指示器大小:") { cell(indicatorSizeSpinner) }
+                row("指示器透明度:") {
+                    cell(indicatorOpacitySlider)
+                    label("${indicatorOpacitySlider.value}%")
                 }
-                row("Display Timeout (ms):") { indicatorTimeoutSpinner() }
+                row("显示超时时间 (毫秒):") { cell(indicatorTimeoutSpinner) }
             }
-            
-            titledRow("Advanced Settings") {
-                row("Detection Delay (ms):") { detectionDelaySpinner() }
-                row("Switch Delay (ms):") { switchDelaySpinner() }
-                row { debugModeCheckBox() }
+
+            group("高级设置") {
+                row("检测延迟 (毫秒):") { cell(detectionDelaySpinner) }
+                row("切换延迟 (毫秒):") { cell(switchDelaySpinner) }
+                row { cell(debugModeCheckBox) }
             }
-            
-            titledRow("Platform Information") {
-                row { platformInfoLabel() }
+
+            group("平台信息") {
+                row { cell(platformInfoLabel) }
             }
-            
+
             row {
-                button("Reset to Defaults") {
+                button("重置为默认值") {
                     resetToDefaults()
                 }
-                button("Test Input Method Switching") {
-                    testInputMethodSwitching()
+                button("测试切换到英文") {
+                    testSwitchToEnglish()
+                }
+                button("测试切换到中文") {
+                    testSwitchToChinese()
+                }
+                button("检测当前输入法") {
+                    detectCurrentInputMethod()
                 }
             }
         }.apply {
@@ -233,13 +239,105 @@ class SmartInputConfigurable : Configurable {
         reset()
     }
 
-    private fun testInputMethodSwitching() {
-        // This would trigger a test of the input method switching functionality
-        JOptionPane.showMessageDialog(
-            null,
-            "Input method switching test would be performed here.\nCheck the IDE logs for results.",
-            "Test Input Method Switching",
-            JOptionPane.INFORMATION_MESSAGE
-        )
+    private fun testSwitchToEnglish() {
+        try {
+            // 使用Java Robot类直接发送键盘事件
+            val robot = java.awt.Robot()
+
+            // 发送Ctrl+Space
+            robot.keyPress(java.awt.event.KeyEvent.VK_CONTROL)
+            Thread.sleep(10)
+            robot.keyPress(java.awt.event.KeyEvent.VK_SPACE)
+            Thread.sleep(50)
+            robot.keyRelease(java.awt.event.KeyEvent.VK_SPACE)
+            Thread.sleep(10)
+            robot.keyRelease(java.awt.event.KeyEvent.VK_CONTROL)
+
+            JOptionPane.showMessageDialog(
+                null,
+                "Java Robot Test Completed!\n\nCtrl+Space has been sent using Java Robot.\nPlease test input in Notepad immediately!",
+                "Test Switch to English - Java Robot",
+                JOptionPane.INFORMATION_MESSAGE
+            )
+
+        } catch (e: Exception) {
+            JOptionPane.showMessageDialog(
+                null,
+                "Java Robot test failed: ${e.message}",
+                "Test Switch to English - Error",
+                JOptionPane.ERROR_MESSAGE
+            )
+        }
+    }
+
+    private fun testSwitchToChinese() {
+        try {
+            // 使用Java Robot类直接发送键盘事件
+            val robot = java.awt.Robot()
+
+            // 发送Ctrl+Space
+            robot.keyPress(java.awt.event.KeyEvent.VK_CONTROL)
+            Thread.sleep(10)
+            robot.keyPress(java.awt.event.KeyEvent.VK_SPACE)
+            Thread.sleep(50)
+            robot.keyRelease(java.awt.event.KeyEvent.VK_SPACE)
+            Thread.sleep(10)
+            robot.keyRelease(java.awt.event.KeyEvent.VK_CONTROL)
+
+            JOptionPane.showMessageDialog(
+                null,
+                "Java Robot Test Completed!\n\nCtrl+Space has been sent using Java Robot.\nPlease test input in Notepad immediately!",
+                "Test Switch to Chinese - Java Robot",
+                JOptionPane.INFORMATION_MESSAGE
+            )
+
+        } catch (e: Exception) {
+            JOptionPane.showMessageDialog(
+                null,
+                "Java Robot test failed: ${e.message}",
+                "Test Switch to Chinese - Error",
+                JOptionPane.ERROR_MESSAGE
+            )
+        }
+    }
+
+    private fun detectCurrentInputMethod() {
+        try {
+            // 检测当前输入法状态
+            val script = """
+                Add-Type -TypeDefinition @'
+                using System;
+                using System.Runtime.InteropServices;
+                public class InputMethod {
+                    [DllImport("user32.dll")]
+                    public static extern IntPtr GetKeyboardLayout(uint idThread);
+                }
+'@
+                ${'$'}layout = [InputMethod]::GetKeyboardLayout(0).ToString('X8')
+                Write-Output "当前键盘布局: ${'$'}layout"
+
+                ${'$'}lang = Get-WinUserLanguageList | Select-Object -First 1
+                Write-Output "当前语言: $(${'$'}lang.LanguageTag)"
+                Write-Output "输入法: $(${'$'}lang.InputMethodTips)"
+            """.trimIndent()
+
+            val process = ProcessBuilder("powershell", "-Command", script).start()
+            val output = process.inputStream.bufferedReader().readText()
+            process.waitFor()
+
+            JOptionPane.showMessageDialog(
+                null,
+                "当前输入法状态：\n\n$output",
+                "检测当前输入法",
+                JOptionPane.INFORMATION_MESSAGE
+            )
+        } catch (e: Exception) {
+            JOptionPane.showMessageDialog(
+                null,
+                "检测失败：${e.message}",
+                "检测当前输入法",
+                JOptionPane.ERROR_MESSAGE
+            )
+        }
     }
 }

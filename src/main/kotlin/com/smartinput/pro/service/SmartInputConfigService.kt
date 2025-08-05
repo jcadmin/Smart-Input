@@ -5,8 +5,8 @@ import com.intellij.openapi.components.*
 import com.intellij.util.xmlb.XmlSerializerUtil
 
 /**
- * Service for managing Smart Input Pro configuration settings.
- * This service persists user preferences and provides access to configuration options.
+ * 智能输入法配置服务
+ * 负责管理插件的配置设置，持久化用户偏好并提供配置选项访问
  */
 @Service(Service.Level.APP)
 @State(
@@ -22,41 +22,41 @@ class SmartInputConfigService : PersistentStateComponent<SmartInputConfigService
     }
 
     /**
-     * Configuration state class that holds all plugin settings
+     * 配置状态类，保存所有插件设置
      */
     data class State(
-        // General Settings
+        // 基本设置
         var enabled: Boolean = true,
         var showIndicator: Boolean = true,
         var autoSwitchMode: Boolean = true,
-        
-        // Context Rules
+
+        // 上下文规则
         var switchInCodeAreas: Boolean = true,
         var switchInComments: Boolean = false,
         var switchInStrings: Boolean = false,
         var switchInDocumentation: Boolean = false,
-        
-        // Input Method Preferences
+
+        // 输入法偏好设置
         var codeAreaInputMethod: String = "english",
         var commentInputMethod: String = "chinese",
         var stringInputMethod: String = "auto",
         var documentationInputMethod: String = "chinese",
-        
-        // Appearance Settings
+
+        // 外观设置
         var indicatorPosition: String = "cursor", // cursor, top-right, bottom-right
         var indicatorSize: Int = 12,
         var indicatorOpacity: Float = 0.8f,
         var indicatorTimeout: Int = 2000,
-        
-        // Advanced Settings
+
+        // 高级设置
         var detectionDelay: Int = 100,
         var switchDelay: Int = 50,
         var debugMode: Boolean = false,
-        
-        // Platform-specific settings
+
+        // 平台特定设置
         var windowsInputMethods: MutableMap<String, String> = mutableMapOf(
-            "english" to "0409:00000409", // US English
-            "chinese" to "0804:00000804"  // Chinese Simplified
+            "english" to "0409:00000409", // 美式英语
+            "chinese" to "0804:00000804"  // 简体中文
         ),
         var macosInputMethods: MutableMap<String, String> = mutableMapOf(
             "english" to "com.apple.keylayout.US",
@@ -76,7 +76,7 @@ class SmartInputConfigService : PersistentStateComponent<SmartInputConfigService
         XmlSerializerUtil.copyBean(state, myState)
     }
 
-    // Convenience methods for accessing configuration
+    // 便捷的配置访问方法
     fun isEnabled(): Boolean = myState.enabled
     fun setEnabled(enabled: Boolean) {
         myState.enabled = enabled
@@ -121,28 +121,28 @@ class SmartInputConfigService : PersistentStateComponent<SmartInputConfigService
     }
 
     /**
-     * Reset all settings to default values
+     * 重置所有设置为默认值
      */
     fun resetToDefaults() {
         myState = State()
     }
 
     /**
-     * Validate configuration and fix any invalid values
+     * 验证配置并修复无效值
      */
     fun validateAndFix() {
-        // Ensure delays are within reasonable bounds
+        // 确保延迟在合理范围内
         if (myState.detectionDelay < 0) myState.detectionDelay = 0
         if (myState.detectionDelay > 5000) myState.detectionDelay = 5000
-        
+
         if (myState.switchDelay < 0) myState.switchDelay = 0
         if (myState.switchDelay > 1000) myState.switchDelay = 1000
-        
-        // Ensure opacity is within valid range
+
+        // 确保透明度在有效范围内
         if (myState.indicatorOpacity < 0.1f) myState.indicatorOpacity = 0.1f
         if (myState.indicatorOpacity > 1.0f) myState.indicatorOpacity = 1.0f
-        
-        // Ensure timeout is reasonable
+
+        // 确保超时时间合理
         if (myState.indicatorTimeout < 500) myState.indicatorTimeout = 500
         if (myState.indicatorTimeout > 10000) myState.indicatorTimeout = 10000
     }

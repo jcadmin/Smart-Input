@@ -1,7 +1,7 @@
 package com.smartinput.pro.model
 
 /**
- * Enumeration of supported input method types
+ * 支持的输入法类型枚举
  */
 enum class InputMethodType(val displayName: String, val code: String) {
     ENGLISH("English", "en"),
@@ -22,14 +22,14 @@ enum class InputMethodType(val displayName: String, val code: String) {
 }
 
 /**
- * Represents the context where input method switching occurs
+ * 输入法切换发生的上下文类型
  */
 enum class ContextType(val displayName: String, val description: String) {
-    CODE("Code", "Variable names, method names, class names"),
-    COMMENT("Comment", "Line comments, block comments"),
-    STRING("String", "String literals and content"),
-    DOCUMENTATION("Documentation", "JavaDoc, KDoc, and other documentation"),
-    UNKNOWN("Unknown", "Unrecognized context");
+    CODE("代码", "变量名、方法名、类名"),
+    COMMENT("注释", "行注释、块注释"),
+    STRING("字符串", "字符串字面量和内容"),
+    DOCUMENTATION("文档", "JavaDoc、KDoc和其他文档"),
+    UNKNOWN("未知", "无法识别的上下文");
 
     companion object {
         fun fromString(str: String): ContextType {
@@ -41,7 +41,7 @@ enum class ContextType(val displayName: String, val description: String) {
 }
 
 /**
- * Represents a context detection result
+ * 上下文检测结果
  */
 data class ContextInfo(
     val type: ContextType,

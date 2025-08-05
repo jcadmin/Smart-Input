@@ -11,7 +11,7 @@ import com.smartinput.pro.service.InputMethodService
 import com.smartinput.pro.model.InputMethodType
 
 /**
- * Action to manually switch input method
+ * 手动切换输入法的动作
  */
 class ManualSwitchAction : AnAction(), DumbAware {
     
@@ -27,30 +27,30 @@ class ManualSwitchAction : AnAction(), DumbAware {
         try {
             val inputMethodService = InputMethodService.getInstance(project)
             val currentMethod = inputMethodService.getCurrentInputMethod()
-            
-            // Toggle between English and Chinese
+
+            // 在英文和中文之间切换
             val targetMethod = when (currentMethod) {
                 InputMethodType.ENGLISH -> InputMethodType.CHINESE
                 InputMethodType.CHINESE -> InputMethodType.ENGLISH
                 InputMethodType.UNKNOWN -> InputMethodType.ENGLISH
             }
-            
-            inputMethodService.switchToInputMethod(targetMethod, "manual")
-            
-            val message = "Switched to ${targetMethod.displayName} input method"
+
+            inputMethodService.switchToInputMethod(targetMethod, "手动")
+
+            val message = "已切换到${targetMethod.displayName}输入法"
             LOG.info(message)
-            
-            // Show brief notification
+
+            // 显示简短通知
             if (configService.isDebugMode()) {
-                Messages.showInfoMessage(project, message, "Smart Input Pro")
+                Messages.showInfoMessage(project, message, "智能输入法专业版")
             }
-            
+
         } catch (ex: Exception) {
-            LOG.error("Error manually switching input method", ex)
+            LOG.error("手动切换输入法时出错", ex)
             Messages.showErrorDialog(
                 e.project,
-                "Failed to switch input method: ${ex.message}",
-                "Smart Input Pro Error"
+                "切换输入法失败：${ex.message}",
+                "智能输入法专业版错误"
             )
         }
     }

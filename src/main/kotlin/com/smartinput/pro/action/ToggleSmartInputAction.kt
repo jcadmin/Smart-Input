@@ -8,7 +8,7 @@ import com.intellij.openapi.ui.Messages
 import com.smartinput.pro.service.SmartInputConfigService
 
 /**
- * Action to toggle Smart Input Pro on/off
+ * 切换智能输入法专业版开关的动作
  */
 class ToggleSmartInputAction : AnAction(), DumbAware {
     
@@ -22,42 +22,42 @@ class ToggleSmartInputAction : AnAction(), DumbAware {
         try {
             val wasEnabled = configService.isEnabled()
             configService.setEnabled(!wasEnabled)
-            
-            val newState = if (configService.isEnabled()) "enabled" else "disabled"
-            val message = "Smart Input Pro has been $newState"
-            
+
+            val newState = if (configService.isEnabled()) "已启用" else "已禁用"
+            val message = "智能输入法专业版$newState"
+
             LOG.info(message)
-            
-            // Show notification to user
+
+            // 向用户显示通知
             Messages.showInfoMessage(
                 e.project,
                 message,
-                "Smart Input Pro"
+                "智能输入法专业版"
             )
-            
+
         } catch (ex: Exception) {
-            LOG.error("Error toggling Smart Input Pro", ex)
+            LOG.error("切换智能输入法专业版时出错", ex)
             Messages.showErrorDialog(
                 e.project,
-                "Failed to toggle Smart Input Pro: ${ex.message}",
-                "Smart Input Pro Error"
+                "切换智能输入法专业版失败：${ex.message}",
+                "智能输入法专业版错误"
             )
         }
     }
 
     override fun update(e: AnActionEvent) {
         val presentation = e.presentation
-        
-        // Update action text based on current state
+
+        // 根据当前状态更新动作文本
         if (configService.isEnabled()) {
-            presentation.text = "Disable Smart Input Pro"
-            presentation.description = "Disable automatic input method switching"
+            presentation.text = "禁用智能输入法专业版"
+            presentation.description = "禁用自动输入法切换"
         } else {
-            presentation.text = "Enable Smart Input Pro"
-            presentation.description = "Enable automatic input method switching"
+            presentation.text = "启用智能输入法专业版"
+            presentation.description = "启用自动输入法切换"
         }
-        
-        // Action is always available
+
+        // 动作始终可用
         presentation.isEnabled = true
         presentation.isVisible = true
     }

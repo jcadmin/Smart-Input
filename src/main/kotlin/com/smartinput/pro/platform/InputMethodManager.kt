@@ -87,18 +87,33 @@ abstract class InputMethodManager {
  * Windows-specific input method manager
  */
 class WindowsInputMethodManager : InputMethodManager() {
-    
+
+    companion object {
+        private val LOG = Logger.getInstance(WindowsInputMethodManager::class.java)
+    }
+
     override fun isAvailable(): Boolean = true
 
     override suspend fun getCurrentInputMethod(): InputMethodType {
         return try {
-            val result = executeCommand("powershell", "-Command", 
-                "Get-WinUserLanguageList | Select-Object -First 1 | ForEach-Object { $_.InputMethodTips }")
-            
+            // 方法1：检查当前键盘布局
+            val layoutResult = executeCommand("powershell", "-Command",
+                "Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public class Win32 { [DllImport(\"user32.dll\")] public static extern IntPtr GetKeyboardLayout(uint idThread); }'; " +
+                "[Win32]::GetKeyboardLayout(0).ToString('X8')")
+
             when {
-                result.contains("0409") -> InputMethodType.ENGLISH
-                result.contains("0804") -> InputMethodType.CHINESE
-                else -> InputMethodType.UNKNOWN
+                layoutResult.contains("00000409") || layoutResult.contains("409") -> InputMethodType.ENGLISH
+                layoutResult.contains("00000804") || layoutResult.contains("804") -> InputMethodType.CHINESE
+                else -> {
+                    // 方法2：检查语言列表
+                    val langResult = executeCommand("powershell", "-Command",
+                        "Get-WinUserLanguageList | Select-Object -First 1 | ForEach-Object { \$_.LanguageTag }")
+                    when {
+                        langResult.contains("en") -> InputMethodType.ENGLISH
+                        langResult.contains("zh") -> InputMethodType.CHINESE
+                        else -> InputMethodType.UNKNOWN
+                    }
+                }
             }
         } catch (e: Exception) {
             LOG.warn("Failed to detect Windows input method", e)
@@ -108,14 +123,10 @@ class WindowsInputMethodManager : InputMethodManager() {
 
     override suspend fun switchToInputMethod(inputMethod: InputMethodType): Boolean {
         return try {
-            val inputMethodId = configService.getInputMethodId("windows", inputMethod.code)
-            if (inputMethodId != null) {
-                executeCommand("powershell", "-Command", 
-                    "Set-WinUserLanguageList -LanguageList $inputMethodId -Force")
-                true
-            } else {
-                LOG.warn("No Windows input method ID configured for $inputMethod")
-                false
+            when (inputMethod) {
+                InputMethodType.ENGLISH -> switchToEnglishWindows()
+                InputMethodType.CHINESE -> switchToChineseWindows()
+                else -> false
             }
         } catch (e: Exception) {
             LOG.error("Failed to switch Windows input method to $inputMethod", e)
@@ -123,11 +134,73 @@ class WindowsInputMethodManager : InputMethodManager() {
         }
     }
 
+    private fun switchToEnglishWindows(): Boolean {
+        return try {
+            // 使用Java Robot类直接发送键盘事件
+            val robot = java.awt.Robot()
+
+            // 发送Ctrl+Space
+            robot.keyPress(java.awt.event.KeyEvent.VK_CONTROL)
+            Thread.sleep(10)
+            robot.keyPress(java.awt.event.KeyEvent.VK_SPACE)
+            Thread.sleep(50)
+            robot.keyRelease(java.awt.event.KeyEvent.VK_SPACE)
+            Thread.sleep(10)
+            robot.keyRelease(java.awt.event.KeyEvent.VK_CONTROL)
+
+            LOG.info("使用Java Robot发送Ctrl+Space切换到英文")
+
+            // 添加调试通知
+            if (configService.isDebugMode()) {
+                showDebugNotification("已使用Java Robot发送Ctrl+Space切换到英文")
+            }
+            true
+        } catch (e: Exception) {
+            LOG.error("Java Robot切换失败", e)
+            if (configService.isDebugMode()) {
+                showDebugNotification("Java Robot切换失败: ${e.message}")
+            }
+            false
+        }
+    }
+
+    private fun switchToChineseWindows(): Boolean {
+        return try {
+            // 使用Java Robot类直接发送键盘事件
+            val robot = java.awt.Robot()
+
+            // 发送Ctrl+Space
+            robot.keyPress(java.awt.event.KeyEvent.VK_CONTROL)
+            Thread.sleep(10)
+            robot.keyPress(java.awt.event.KeyEvent.VK_SPACE)
+            Thread.sleep(50)
+            robot.keyRelease(java.awt.event.KeyEvent.VK_SPACE)
+            Thread.sleep(10)
+            robot.keyRelease(java.awt.event.KeyEvent.VK_CONTROL)
+
+            LOG.info("使用Java Robot发送Ctrl+Space切换到中文")
+
+            // 添加调试通知
+            if (configService.isDebugMode()) {
+                showDebugNotification("已使用Java Robot发送Ctrl+Space切换到中文")
+            }
+            true
+        } catch (e: Exception) {
+            LOG.error("Java Robot切换失败", e)
+            if (configService.isDebugMode()) {
+                showDebugNotification("Java Robot切换失败: ${e.message}")
+            }
+            false
+        }
+
+
+    }
+
     override fun getAvailableInputMethods(): List<PlatformInputMethod> {
         return try {
-            val result = executeCommand("powershell", "-Command", 
-                "Get-WinUserLanguageList | ForEach-Object { $_.InputMethodTips }")
-            
+            val result = executeCommand("powershell", "-Command",
+                "Get-WinUserLanguageList | ForEach-Object { \$_.InputMethodTips }")
+
             parseWindowsInputMethods(result)
         } catch (e: Exception) {
             LOG.warn("Failed to get Windows input methods", e)
@@ -153,7 +226,11 @@ class WindowsInputMethodManager : InputMethodManager() {
  * macOS-specific input method manager
  */
 class MacOSInputMethodManager : InputMethodManager() {
-    
+
+    companion object {
+        private val LOG = Logger.getInstance(MacOSInputMethodManager::class.java)
+    }
+
     override fun isAvailable(): Boolean = true
 
     override suspend fun getCurrentInputMethod(): InputMethodType {
@@ -174,13 +251,18 @@ class MacOSInputMethodManager : InputMethodManager() {
 
     override suspend fun switchToInputMethod(inputMethod: InputMethodType): Boolean {
         return try {
-            val inputMethodId = configService.getInputMethodId("macos", inputMethod.code)
+            val key = when (inputMethod) {
+                InputMethodType.ENGLISH -> "english"
+                InputMethodType.CHINESE -> "chinese"
+                else -> inputMethod.code
+            }
+            val inputMethodId = configService.getInputMethodId("macos", key)
             if (inputMethodId != null) {
-                executeCommand("osascript", "-e", 
+                executeCommand("osascript", "-e",
                     "tell application \"System Events\" to tell process \"SystemUIServer\" to click menu bar item \"$inputMethodId\" of menu bar 1")
                 true
             } else {
-                LOG.warn("No macOS input method ID configured for $inputMethod")
+                LOG.warn("No macOS input method ID configured for $inputMethod (key: $key)")
                 false
             }
         } catch (e: Exception) {
@@ -205,7 +287,11 @@ class MacOSInputMethodManager : InputMethodManager() {
  * Linux-specific input method manager
  */
 class LinuxInputMethodManager : InputMethodManager() {
-    
+
+    companion object {
+        private val LOG = Logger.getInstance(LinuxInputMethodManager::class.java)
+    }
+
     override fun isAvailable(): Boolean {
         return try {
             executeCommand("which", "ibus").isNotEmpty() || 
@@ -262,7 +348,11 @@ class LinuxInputMethodManager : InputMethodManager() {
  * Fallback manager for unsupported platforms
  */
 class UnsupportedInputMethodManager : InputMethodManager() {
-    
+
+    companion object {
+        private val LOG = Logger.getInstance(UnsupportedInputMethodManager::class.java)
+    }
+
     override fun isAvailable(): Boolean = false
 
     override suspend fun getCurrentInputMethod(): InputMethodType = InputMethodType.UNKNOWN
@@ -275,6 +365,24 @@ class UnsupportedInputMethodManager : InputMethodManager() {
     override fun getAvailableInputMethods(): List<PlatformInputMethod> = emptyList()
 
     override fun getSupportedInputMethods(): List<InputMethodType> = emptyList()
+}
+
+/**
+ * Show debug notification (only in debug mode)
+ */
+private fun showDebugNotification(message: String) {
+    try {
+        // 使用系统通知显示调试信息
+        val script = """
+            Add-Type -AssemblyName System.Windows.Forms
+            [System.Windows.Forms.MessageBox]::Show('$message', '智能输入法调试', 'OK', 'Information')
+        """.trimIndent()
+
+        executeCommand("powershell", "-Command", script)
+    } catch (e: Exception) {
+        // 如果通知失败，至少记录日志
+        println("调试通知: $message")
+    }
 }
 
 /**

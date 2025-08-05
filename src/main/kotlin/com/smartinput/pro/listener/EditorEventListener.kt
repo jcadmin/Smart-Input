@@ -1,5 +1,6 @@
 package com.smartinput.pro.listener
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.*
@@ -9,6 +10,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.smartinput.pro.service.SmartInputConfigService
 import com.smartinput.pro.service.InputMethodService
 import com.smartinput.pro.analyzer.ContextAnalyzer
+import com.smartinput.pro.model.ContextInfo
 import com.smartinput.pro.indicator.InputMethodIndicator
 import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentHashMap
@@ -16,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * Listens to editor events and triggers input method switching based on cursor context
  */
-class EditorEventListener : EditorEventMulticaster {
+class EditorEventListener {
     
     companion object {
         private val LOG = Logger.getInstance(EditorEventListener::class.java)
@@ -31,85 +33,7 @@ class EditorEventListener : EditorEventMulticaster {
     private val listenerScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val debounceJobs = ConcurrentHashMap<Editor, Job>()
 
-    override fun addCaretListener(listener: CaretListener) {
-        // Implementation for interface compliance
-    }
 
-    override fun removeCaretListener(listener: CaretListener) {
-        // Implementation for interface compliance
-    }
-
-    override fun addSelectionListener(listener: SelectionListener) {
-        // Implementation for interface compliance
-    }
-
-    override fun removeSelectionListener(listener: SelectionListener) {
-        // Implementation for interface compliance
-    }
-
-    override fun addDocumentListener(listener: DocumentListener) {
-        // Implementation for interface compliance
-    }
-
-    override fun removeDocumentListener(listener: DocumentListener) {
-        // Implementation for interface compliance
-    }
-
-    override fun addEditorMouseListener(listener: EditorMouseListener) {
-        // Implementation for interface compliance
-    }
-
-    override fun removeEditorMouseListener(listener: EditorMouseListener) {
-        // Implementation for interface compliance
-    }
-
-    override fun addEditorMouseMotionListener(listener: EditorMouseMotionListener) {
-        // Implementation for interface compliance
-    }
-
-    override fun removeEditorMouseMotionListener(listener: EditorMouseMotionListener) {
-        // Implementation for interface compliance
-    }
-
-    override fun addErrorStripeListener(listener: ErrorStripeListener) {
-        // Implementation for interface compliance
-    }
-
-    override fun removeErrorStripeListener(listener: ErrorStripeListener) {
-        // Implementation for interface compliance
-    }
-
-    override fun addEditingAreaListener(listener: EditingAreaListener) {
-        // Implementation for interface compliance
-    }
-
-    override fun removeEditingAreaListener(listener: EditingAreaListener) {
-        // Implementation for interface compliance
-    }
-
-    override fun addPropertyChangeListener(listener: java.beans.PropertyChangeListener) {
-        // Implementation for interface compliance
-    }
-
-    override fun removePropertyChangeListener(listener: java.beans.PropertyChangeListener) {
-        // Implementation for interface compliance
-    }
-
-    override fun addFocusChangeListener(listener: FocusChangeListener) {
-        // Implementation for interface compliance
-    }
-
-    override fun removeFocusChangeListener(listener: FocusChangeListener) {
-        // Implementation for interface compliance
-    }
-
-    override fun addVisibleAreaListener(listener: VisibleAreaListener) {
-        // Implementation for interface compliance
-    }
-
-    override fun removeVisibleAreaListener(listener: VisibleAreaListener) {
-        // Implementation for interface compliance
-    }
 
     /**
      * Initialize the listener for a specific editor
@@ -189,23 +113,33 @@ class EditorEventListener : EditorEventMulticaster {
             LOG.debug("Processing caret position change: line=${caretPosition.line}, column=${caretPosition.column}")
         }
 
-        // Get PSI file
-        val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
-        
-        // Analyze context at caret position
-        val offset = editor.logicalPositionToOffset(caretPosition)
-        val contextInfo = contextAnalyzer.analyzeContext(psiFile, offset)
-        
+        // 使用ReadAction确保线程安全访问PSI
+        val contextInfo = ApplicationManager.getApplication().runReadAction<ContextInfo?> {
+            try {
+                // Get PSI file
+                val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return@runReadAction null
+
+                // Analyze context at caret position
+                val offset = editor.logicalPositionToOffset(caretPosition)
+                contextAnalyzer.analyzeContext(psiFile, offset)
+            } catch (e: Exception) {
+                LOG.error("Error analyzing context in ReadAction", e)
+                null
+            }
+        }
+
+        if (contextInfo == null) return
+
         if (configService.isDebugMode()) {
             LOG.debug("Context analysis result: $contextInfo")
         }
 
         // Get input method service
         val inputMethodService = InputMethodService.getInstance(project)
-        
+
         // Determine preferred input method for this context
         val preferredInputMethod = inputMethodService.getPreferredInputMethod(contextInfo.type.name.lowercase())
-        
+
         // Switch input method if needed
         if (preferredInputMethod != inputMethodService.getCurrentInputMethod()) {
             inputMethodService.switchToInputMethod(preferredInputMethod, contextInfo.type.name.lowercase())

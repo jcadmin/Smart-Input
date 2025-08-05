@@ -2,6 +2,7 @@ package com.smartinput.pro.listener
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
@@ -54,7 +55,7 @@ class EditorManagerListener : FileEditorManagerListener {
         }
     }
 
-    override fun selectionChanged(event: FileEditorManagerListener.FileEditorManagerEvent) {
+    override fun selectionChanged(event: FileEditorManagerEvent) {
         if (!configService.isEnabled()) {
             return
         }
@@ -63,7 +64,7 @@ class EditorManagerListener : FileEditorManagerListener {
             val newEditor = event.newEditor
             if (newEditor is TextEditor) {
                 val editor = newEditor.editor
-                
+
                 LOG.debug("Editor selection changed, ensuring Smart Input Pro is initialized")
                 editorEventListener.initializeForEditor(editor)
             }

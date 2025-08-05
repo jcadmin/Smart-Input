@@ -10,9 +10,9 @@ import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Service for managing input method switching and state tracking.
- * This service handles the actual switching of input methods and maintains
- * the current state across different contexts.
+ * 输入法管理服务
+ * 负责处理输入法的实际切换和状态跟踪，
+ * 在不同上下文中维护当前状态
  */
 @Service(Service.Level.PROJECT)
 class InputMethodService(private val project: Project) {
@@ -29,24 +29,24 @@ class InputMethodService(private val project: Project) {
     private val platformDetector = PlatformDetector()
     private val inputMethodManager = InputMethodManager.create(platformDetector.getCurrentPlatform())
     
-    // Coroutine scope for async operations
+    // 异步操作的协程作用域
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    
-    // State tracking
+
+    // 状态跟踪
     private var currentInputMethod: InputMethodType = InputMethodType.UNKNOWN
     private var lastSwitchTime: Long = 0
     private val switchHistory = ConcurrentHashMap<String, InputMethodType>()
-    
-    // Listeners for input method changes
+
+    // 输入法变化监听器
     private val listeners = mutableListOf<InputMethodChangeListener>()
 
     init {
-        // Initialize current input method state
+        // 初始化当前输入法状态
         detectCurrentInputMethod()
     }
 
     /**
-     * Interface for listening to input method changes
+     * 输入法变化监听器接口
      */
     interface InputMethodChangeListener {
         fun onInputMethodChanged(oldMethod: InputMethodType, newMethod: InputMethodType)
@@ -54,14 +54,14 @@ class InputMethodService(private val project: Project) {
     }
 
     /**
-     * Add a listener for input method changes
+     * 添加输入法变化监听器
      */
     fun addListener(listener: InputMethodChangeListener) {
         listeners.add(listener)
     }
 
     /**
-     * Remove a listener for input method changes
+     * 移除输入法变化监听器
      */
     fun removeListener(listener: InputMethodChangeListener) {
         listeners.remove(listener)

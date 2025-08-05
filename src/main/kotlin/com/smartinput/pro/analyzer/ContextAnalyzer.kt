@@ -121,24 +121,23 @@ class ContextAnalyzer {
      * Analyze documentation context (JavaDoc, KDoc, etc.)
      */
     private fun analyzeDocumentationContext(element: PsiElement): ContextInfo {
-        // Check for JavaDoc
-        val javaDocParent = PsiTreeUtil.getParentOfType(element, PsiDocComment::class.java)
-        if (javaDocParent != null) {
-            return ContextInfo(
-                type = ContextType.DOCUMENTATION,
-                confidence = 1.0f,
-                details = "In JavaDoc comment",
-                suggestedInputMethod = InputMethodType.CHINESE
-            )
-        }
-
-        // Check for other documentation patterns
+        // Check for documentation patterns in comments
         val parent = element.parent
         if (parent is PsiComment && isDocumentationComment(parent)) {
             return ContextInfo(
                 type = ContextType.DOCUMENTATION,
                 confidence = 0.9f,
                 details = "In documentation comment",
+                suggestedInputMethod = InputMethodType.CHINESE
+            )
+        }
+
+        // Check if element itself is a documentation comment
+        if (element is PsiComment && isDocumentationComment(element)) {
+            return ContextInfo(
+                type = ContextType.DOCUMENTATION,
+                confidence = 1.0f,
+                details = "Documentation comment",
                 suggestedInputMethod = InputMethodType.CHINESE
             )
         }
@@ -192,11 +191,19 @@ class ContextAnalyzer {
      */
     private fun extractStringContent(stringElement: PsiElement): String {
         val text = stringElement.text
-        return when {
-            text.startsWith("\"") && text.endsWith("\"") -> text.substring(1, text.length - 1)
-            text.startsWith("'") && text.endsWith("'") -> text.substring(1, text.length - 1)
-            text.startsWith("`") && text.endsWith("`") -> text.substring(1, text.length - 1)
-            else -> text
+        return try {
+            when {
+                text.length >= 2 && text.startsWith("\"") && text.endsWith("\"") ->
+                    text.substring(1, text.length - 1)
+                text.length >= 2 && text.startsWith("'") && text.endsWith("'") ->
+                    text.substring(1, text.length - 1)
+                text.length >= 2 && text.startsWith("`") && text.endsWith("`") ->
+                    text.substring(1, text.length - 1)
+                else -> text
+            }
+        } catch (e: StringIndexOutOfBoundsException) {
+            LOG.warn("Error extracting string content from: '$text'", e)
+            text
         }
     }
 
